@@ -1,7 +1,7 @@
 # Psy-help info bot
 
 ## How it works:
-The bot talks about the course of psychological assistance, available at [Anatomy of emotions site](https://kochet-psy.ru/anatomy_of_emotions).
+This [Telegram-bot](https://t.me/LetsTestPsyBot) talks about the course of psychological assistance, available at [Anatomy of emotions site](https://kochet-psy.ru/anatomy_of_emotions).
 
 ## How to prepare:
 1. Install Python 3.9.13. You can get it from [official website](https://www.python.org/).
