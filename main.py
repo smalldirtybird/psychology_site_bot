@@ -245,11 +245,12 @@ def handle_menu(bot, update, course_content_folder):
         send_mentors_menu(bot, chat_id, course_content_folder)
         return 'HANDLE_MENTORS'
     if query == 'get_course':
+        payment_url = 'https://kochet-psy.ru/anatomy_of_emotions'
         bot.send_message(
             chat_id=chat_id,
-            text=dedent("""
+            text=dedent(f"""
                 Чтобы заказать курс, пожалуйста, пройдите по сслыке:
-                https://kochet-psy.ru/anatomy_of_emotions
+                {payment_url}
                 """),
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(
                 'В меню', callback_data='back_to_menu')]]))
