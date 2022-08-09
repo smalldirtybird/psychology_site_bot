@@ -27,7 +27,7 @@ def send_main_menu_keyboard(bot, chat_id):
         [InlineKeyboardButton('Для кого', callback_data='symptoms')],
         [InlineKeyboardButton('Программа', callback_data='program')],
         [InlineKeyboardButton('Преподаватели', callback_data='mentors')],
-        [InlineKeyboardButton('Стоимость', callback_data='course_cost')],
+        [InlineKeyboardButton('Стоимость', callback_data='get_course')],
     ]
     bot.send_message(
         chat_id=chat_id,
@@ -203,7 +203,11 @@ def handle_mentors(bot, update):
 
 
 def handle_payment(bot, update):
-    pass
+    query = update.callback_query.data
+    chat_id = update.callback_query['message']['chat_id']
+    if query == 'back_to_menu':
+        send_main_menu_keyboard(bot, chat_id)
+        return 'HANDLE_MENU'
 
 
 def handle_menu(bot, update):
@@ -234,20 +238,21 @@ def handle_menu(bot, update):
         '''),
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
-        print(query)
         return 'HANDLE_SYMPTOMS'
     if query == 'program':
-        print(query)
         send_program_info(bot, chat_id)
         return 'HANDLE_PROGRAM'
     if query == 'mentors':
-        print(query)
         send_mentors_menu(bot, chat_id)
         return 'HANDLE_MENTORS'
     if query == 'get_course':
         bot.send_message(
             chat_id=chat_id,
-
+            text=dedent("""
+Чтобы заказать курс, пожалуйста, пройдите по сслыке:
+https://kochet-psy.ru/anatomy_of_emotions
+"""),
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('В меню', callback_data='back_to_menu')]])
         )
         return 'HANDLE_PAYMENT'
     bot.delete_message(chat_id=chat_id, message_id=message_id)
@@ -261,7 +266,6 @@ def handle_users_reply(bot, update, database_password, database_host,
         database_host,
         database_port,
     )
-    print(db.keys())
     if update.message:
         user_reply = update.message.text
         chat_id = update.message.chat_id
