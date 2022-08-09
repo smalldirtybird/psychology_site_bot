@@ -115,42 +115,12 @@ def send_mentors_menu(bot, chat_id):
 def handle_program(bot, update, course_content_folder):
     query = update.callback_query.data
     chat_id = update.callback_query['message']['chat_id']
-    lessons = {
-        'lesson_1': """
-Занятие 1. Введение
-
-- различия между эмоциями стыда и вины
-- значение эмоций в нашей жизни
-- формирование стыда и вины
-- последствия самокритики
-        """,
-        'lesson_2': """
-Занятие 2. Дезадаптивный стыд и вина
-
-- влияние стыда и вины на самооценку
-- дезадптивный стыд и гнев, последствия для взаимоотношений
-- дезадаптивные защиты от стыда
-- виды вины
-- последствия дезадаптивной вины
-        """,
-        'lesson_3': """
-Занятие 3. Работа с чувством стыда
-
-- Проживание чувства стыда
-- Когнитивная работа со стыдом
-- Поведенческая работа со стыдом
-        """,
-        'lesson_4': """
-Занятие 4. Работа с чувством вины
-
-- проживание чувства вины;
-- когнитивная работа с виной
-- поведенческая работа с виной
-        """,
-        'lesson_5': """
-Занятие 5. Бонусный урок «Эффективные извинения»
-        """,
-    }
+    lessons_content_filepath = os.path.join(course_content_folder, 'lessons.json')
+    lessons_content = {}
+    with open(os.path.normpath(lessons_content_filepath), 'r') as lessons_json:
+        lessons = json.load(lessons_json)
+        for lesson, content in lessons.items():
+            lessons_content[lesson] = f'{content["header"]}\n{content["content"]}'
     if query == 'back_to_menu':
         send_main_menu_keyboard(bot, chat_id)
         return 'HANDLE_MENU'
@@ -160,10 +130,10 @@ def handle_program(bot, update, course_content_folder):
     if query == 'program':
         send_program_info(bot, chat_id, course_content_folder)
         return 'HANDLE_PROGRAM'
-    if query in lessons.keys():
+    if query in lessons_content.keys():
         bot.send_message(
             chat_id=chat_id,
-            text=dedent(lessons[query]),
+            text=dedent(lessons_content[query]),
             reply_markup=InlineKeyboardMarkup(get_lessons_navigation_menu(query))
         )
     return 'HANDLE_PROGRAM'
@@ -295,7 +265,7 @@ def handle_users_reply(bot, update, database_password, database_host,
 def main():
     load_dotenv()
     image_folder = os.environ['IMAGE_FOLDER_PATH']
-    course_content_folder = 'text_data'
+    course_content_folder = os.environ['COURSE_CONTENT_PATH']
     os.makedirs(image_folder, exist_ok=True)
     token = os.environ['TELEGRAM_BOT_TOKEN']
     updater = Updater(token)
