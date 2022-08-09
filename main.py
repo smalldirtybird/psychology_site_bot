@@ -311,7 +311,6 @@ def main():
     load_dotenv()
     image_folder = os.environ['IMAGE_FOLDER_PATH']
     course_content_folder = os.environ['COURSE_CONTENT_PATH']
-    os.makedirs(image_folder, exist_ok=True)
     token = os.environ['TELEGRAM_BOT_TOKEN']
     updater = Updater(token)
     dispatcher = updater.dispatcher
