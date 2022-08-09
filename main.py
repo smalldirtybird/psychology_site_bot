@@ -79,8 +79,81 @@ def handle_symptoms(bot, update):
         return 'HANDLE_PROGRAM'
 
 
-def handle_program(bot, update):
+def handle_mentors():
     pass
+
+
+def get_lessons_navigation_menu(query):
+    query_number = int(query[-1])
+    if query_number == 1:
+        keyboard = [[InlineKeyboardButton('>', callback_data=f'lesson_{query_number + 1}')]]
+    if query_number == 5:
+        keyboard = [[InlineKeyboardButton('<', callback_data=f'lesson_{query_number - 1}')]]
+    if query_number not in (1, 5):
+        keyboard = [
+            [
+                InlineKeyboardButton('<', callback_data=f'lesson_{query_number - 1}'),
+                InlineKeyboardButton('>', callback_data=f'lesson_{query_number + 1}')
+            ]
+        ]
+    keyboard.append([InlineKeyboardButton('Назад к программе', callback_data='program')])
+    return keyboard
+
+
+def handle_program(bot, update):
+    query = update.callback_query.data
+    chat_id = update.callback_query['message']['chat_id']
+    lessons = {
+        'lesson_1': """
+Занятие 1. Введение
+
+- различия между эмоциями стыда и вины
+- значение эмоций в нашей жизни
+- формирование стыда и вины
+- последствия самокритики
+        """,
+        'lesson_2': """
+Занятие 2. Дезадаптивный стыд и вина
+
+- влияние стыда и вины на самооценку
+- дезадптивный стыд и гнев, последствия для взаимоотношений
+- дезадаптивные защиты от стыда
+- виды вины
+- последствия дезадаптивной вины
+        """,
+        'lesson_3': """
+Занятие 3. Работа с чувством стыда
+
+- Проживание чувства стыда
+- Когнитивная работа со стыдом
+- Поведенческая работа со стыдом
+        """,
+        'lesson_4': """
+Занятие 4. Работа с чувством вины
+
+- проживание чувства вины;
+- когнитивная работа с виной
+- поведенческая работа с виной
+        """,
+        'lesson_5': """
+Занятие 5. Бонусный урок «Эффективные извинения»
+        """,
+    }
+    if query == 'back_to_menu':
+        send_main_menu_keyboard(bot, chat_id)
+        return 'HANDLE_MENU'
+    if query == 'mentors':
+        return 'HANDLE_MENTORS'
+    if query == 'program':
+        send_program_info(bot, chat_id)
+        return 'HANDLE_PROGRAM'
+    if query in lessons.keys():
+        bot.send_message(
+            chat_id=chat_id,
+            text=dedent(lessons[query]),
+            reply_markup=InlineKeyboardMarkup(get_lessons_navigation_menu(query))
+        )
+    return 'HANDLE_PROGRAM'
 
 
 def handle_menu(bot, update):
@@ -118,7 +191,8 @@ def handle_menu(bot, update):
         send_program_info(bot, chat_id)
         return 'HANDLE_PROGRAM'
     if query == 'mentors':
-        pass
+        print(query)
+        return 'HANDLE_MENTORS'
     if query == 'course_cost':
         pass
     bot.delete_message(chat_id=chat_id, message_id=message_id)
@@ -151,6 +225,7 @@ def handle_users_reply(bot, update, database_password, database_host,
         'HANDLE_MENU': handle_menu,
         'HANDLE_SYMPTOMS': handle_symptoms,
         'HANDLE_PROGRAM': handle_program,
+        'HANDLE_MENTORS': handle_mentors,
     }
     state_handler = states_functions[user_state]
     next_state = state_handler(bot, update)
