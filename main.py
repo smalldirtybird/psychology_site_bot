@@ -46,6 +46,10 @@ def start(bot, update, course_content_folder):
         update['message']['chat_id'],
         course_content_folder,
     )
+    bot.delete_message(
+        chat_id=update['message']['chat_id'],
+        message_id=update['message']['message_id'],
+    )
     return 'HANDLE_MENU'
 
 
@@ -82,12 +86,15 @@ def send_program_info(bot, chat_id, course_content_folder):
 
 def handle_symptoms(bot, update, course_content_folder):
     query = update.callback_query.data
+    message_id = update.callback_query['message']['message_id']
     chat_id = update.callback_query['message']['chat_id']
     if query == 'back_to_menu':
         send_main_menu_keyboard(bot, chat_id, course_content_folder)
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
         return 'HANDLE_MENU'
     if query == 'program':
         send_program_info(bot, chat_id, course_content_folder)
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
         return 'HANDLE_PROGRAM'
 
 
@@ -154,6 +161,7 @@ def send_mentors_menu(bot, chat_id, course_content_folder):
 
 def handle_program(bot, update, course_content_folder):
     query = update.callback_query.data
+    message_id = update.callback_query['message']['message_id']
     chat_id = update.callback_query['message']['chat_id']
     lessons_content_filepath = os.path.join(
         course_content_folder, 'lessons.json')
@@ -165,12 +173,15 @@ def handle_program(bot, update, course_content_folder):
                 f'{content["header"]}\n{content["content"]}'
     if query == 'back_to_menu':
         send_main_menu_keyboard(bot, chat_id, course_content_folder)
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
         return 'HANDLE_MENU'
     if query == 'mentors':
         send_mentors_menu(bot, chat_id, course_content_folder)
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
         return 'HANDLE_MENTORS'
     if query == 'program':
         send_program_info(bot, chat_id, course_content_folder)
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
         return 'HANDLE_PROGRAM'
     if query in lessons_content.keys():
         bot.send_message(
@@ -179,11 +190,13 @@ def handle_program(bot, update, course_content_folder):
             reply_markup=InlineKeyboardMarkup(
                 get_lessons_navigation_menu(query))
         )
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
     return 'HANDLE_PROGRAM'
 
 
 def handle_mentors(bot, update, course_content_folder):
     query = update.callback_query.data
+    message_id = update.callback_query['message']['message_id']
     chat_id = update.callback_query['message']['chat_id']
     lessons_content_filepath = os.path.join(
         course_content_folder,
@@ -197,9 +210,11 @@ def handle_mentors(bot, update, course_content_folder):
                 f'{content["name"]}\n{content["description"]}'
     if query == 'back_to_menu':
         send_main_menu_keyboard(bot, chat_id, course_content_folder)
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
         return 'HANDLE_MENU'
     if query == 'mentors':
         send_mentors_menu(bot, chat_id, course_content_folder)
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
     if query in mentors_content.keys():
         bot.send_message(
             chat_id=chat_id,
@@ -207,14 +222,17 @@ def handle_mentors(bot, update, course_content_folder):
             reply_markup=InlineKeyboardMarkup(
                 [[InlineKeyboardButton('Назад', callback_data='mentors')]])
         )
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
     return 'HANDLE_MENTORS'
 
 
 def handle_payment(bot, update, course_content_folder):
     query = update.callback_query.data
+    message_id = update.callback_query['message']['message_id']
     chat_id = update.callback_query['message']['chat_id']
     if query == 'back_to_menu':
         send_main_menu_keyboard(bot, chat_id, course_content_folder)
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
         return 'HANDLE_MENU'
 
 
@@ -237,12 +255,15 @@ def handle_menu(bot, update, course_content_folder):
             text=dedent(symptoms),
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
         return 'HANDLE_SYMPTOMS'
     if query == 'program':
         send_program_info(bot, chat_id, course_content_folder)
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
         return 'HANDLE_PROGRAM'
     if query == 'mentors':
         send_mentors_menu(bot, chat_id, course_content_folder)
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
         return 'HANDLE_MENTORS'
     if query == 'get_course':
         payment_url = 'https://kochet-psy.ru/anatomy_of_emotions'
@@ -254,9 +275,8 @@ def handle_menu(bot, update, course_content_folder):
                 """),
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(
                 'В меню', callback_data='back_to_menu')]]))
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
         return 'HANDLE_PAYMENT'
-    bot.delete_message(chat_id=chat_id, message_id=message_id)
-    return 'START'
 
 
 def handle_users_reply(bot, update, database_password, database_host,
