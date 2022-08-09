@@ -1,3 +1,4 @@
+import json
 import os
 from functools import partial
 from textwrap import dedent
@@ -45,18 +46,17 @@ def start(bot, update):
     return 'HANDLE_MENU'
 
 
-def send_program_info(bot, chat_id):
-    keyboard = [
-        [InlineKeyboardButton('Занятие 1. Введение', callback_data='lesson_1')],
-        [InlineKeyboardButton('Занятие 2. Дезадаптивный стыд и вина', callback_data='lesson_2')],
-        [InlineKeyboardButton('Занятие 3. Работа с чувством стыда', callback_data='lesson_3')],
-        [InlineKeyboardButton('Занятие 4. Работа с чувством вины', callback_data='lesson_4')],
-        [InlineKeyboardButton('Занятие 5. Бонусный урок «Эффективные извинения»', callback_data='lesson_5')],
-        [
+def send_program_info(bot, chat_id, course_content_folder):
+    lessons_content_filepath = os.path.join(course_content_folder, 'lessons.json')
+    with open(os.path.normpath(lessons_content_filepath), 'r') as lessons_json:
+        lessons = json.load(lessons_json)
+    keyboard = []
+    for lesson, content in lessons.items():
+        keyboard.append([InlineKeyboardButton(content['header'], callback_data=lesson)])
+    keyboard.append([
             InlineKeyboardButton('В меню', callback_data='back_to_menu'),
             InlineKeyboardButton('О преподавателях', callback_data='mentors')
-        ]
-    ]
+        ])
     bot.send_message(
         chat_id=chat_id,
         text=dedent("""
@@ -68,14 +68,14 @@ def send_program_info(bot, chat_id):
     )
 
 
-def handle_symptoms(bot, update):
+def handle_symptoms(bot, update, course_content_folder):
     query = update.callback_query.data
     chat_id = update.callback_query['message']['chat_id']
     if query == 'back_to_menu':
         send_main_menu_keyboard(bot, chat_id)
         return 'HANDLE_MENU'
     if query == 'program':
-        send_program_info(bot, chat_id)
+        send_program_info(bot, chat_id, course_content_folder)
         return 'HANDLE_PROGRAM'
 
 
@@ -112,7 +112,7 @@ def send_mentors_menu(bot, chat_id):
     )
 
 
-def handle_program(bot, update):
+def handle_program(bot, update, course_content_folder):
     query = update.callback_query.data
     chat_id = update.callback_query['message']['chat_id']
     lessons = {
@@ -158,7 +158,7 @@ def handle_program(bot, update):
         send_mentors_menu(bot, chat_id)
         return 'HANDLE_MENTORS'
     if query == 'program':
-        send_program_info(bot, chat_id)
+        send_program_info(bot, chat_id, course_content_folder)
         return 'HANDLE_PROGRAM'
     if query in lessons.keys():
         bot.send_message(
@@ -210,7 +210,7 @@ def handle_payment(bot, update):
         return 'HANDLE_MENU'
 
 
-def handle_menu(bot, update):
+def handle_menu(bot, update, course_content_folder):
     query = update.callback_query.data
     message_id = update.callback_query['message']['message_id']
     chat_id = update.callback_query['message']['chat_id']
@@ -240,7 +240,7 @@ def handle_menu(bot, update):
         )
         return 'HANDLE_SYMPTOMS'
     if query == 'program':
-        send_program_info(bot, chat_id)
+        send_program_info(bot, chat_id, course_content_folder)
         return 'HANDLE_PROGRAM'
     if query == 'mentors':
         send_mentors_menu(bot, chat_id)
@@ -260,7 +260,7 @@ https://kochet-psy.ru/anatomy_of_emotions
 
 
 def handle_users_reply(bot, update, database_password, database_host,
-                       database_port, image_filepath):
+                       database_port, image_filepath, course_content_folder):
     db = get_database_connection(
         database_password,
         database_host,
@@ -281,11 +281,11 @@ def handle_users_reply(bot, update, database_password, database_host,
         user_state = db.get(tg_user_id).decode('utf-8')
     states_functions = {
         'START': start,
-        'HANDLE_MENU': handle_menu,
-        'HANDLE_SYMPTOMS': handle_symptoms,
-        'HANDLE_PROGRAM': handle_program,
+        'HANDLE_MENU': partial(handle_menu, course_content_folder=course_content_folder),
+        'HANDLE_SYMPTOMS': partial(handle_symptoms, course_content_folder=course_content_folder),
+        'HANDLE_PROGRAM': partial(handle_program, course_content_folder=course_content_folder),
         'HANDLE_MENTORS': handle_mentors,
-        'HANDLE_PAYMENT': handle_payment
+        'HANDLE_PAYMENT': handle_payment,
     }
     state_handler = states_functions[user_state]
     next_state = state_handler(bot, update)
@@ -295,6 +295,7 @@ def handle_users_reply(bot, update, database_password, database_host,
 def main():
     load_dotenv()
     image_folder = os.environ['IMAGE_FOLDER_PATH']
+    course_content_folder = 'text_data'
     os.makedirs(image_folder, exist_ok=True)
     token = os.environ['TELEGRAM_BOT_TOKEN']
     updater = Updater(token)
@@ -305,6 +306,7 @@ def main():
         database_host=os.environ['DB_HOST'],
         database_port=os.environ['DB_PORT'],
         image_filepath=image_folder,
+        course_content_folder=course_content_folder,
     )
     dispatcher.add_handler(CallbackQueryHandler(handling_users_reply))
     dispatcher.add_handler(MessageHandler(Filters.text, handling_users_reply))
