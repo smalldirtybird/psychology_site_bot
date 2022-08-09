@@ -54,7 +54,7 @@ def send_program_info(bot, chat_id):
         [InlineKeyboardButton('Занятие 5. Бонусный урок «Эффективные извинения»', callback_data='lesson_5')],
         [
             InlineKeyboardButton('В меню', callback_data='back_to_menu'),
-            InlineKeyboardButton('О преподавателях', callback_data='program')
+            InlineKeyboardButton('О преподавателях', callback_data='mentors')
         ]
     ]
     bot.send_message(
@@ -79,10 +79,6 @@ def handle_symptoms(bot, update):
         return 'HANDLE_PROGRAM'
 
 
-def handle_mentors():
-    pass
-
-
 def get_lessons_navigation_menu(query):
     query_number = int(query[-1])
     if query_number == 1:
@@ -98,6 +94,22 @@ def get_lessons_navigation_menu(query):
         ]
     keyboard.append([InlineKeyboardButton('Назад к программе', callback_data='program')])
     return keyboard
+
+
+def send_mentors_menu(bot, chat_id):
+    keyboard = [
+        [InlineKeyboardButton('Ольга Пичугина', callback_data='mentor_1')],
+        [InlineKeyboardButton('Анастасия Демченко', callback_data='mentor_2')],
+        [InlineKeyboardButton('В меню', callback_data='back_to_menu')]]
+    bot.send_message(
+        chat_id=chat_id,
+        text=dedent("""
+Преподаватели
+
+Мы работали над данным курсом более полугода, чтобы вы могли лучше разобраться в непростых эмоциональных переживаниях 
+        """),
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
 
 def handle_program(bot, update):
@@ -143,6 +155,7 @@ def handle_program(bot, update):
         send_main_menu_keyboard(bot, chat_id)
         return 'HANDLE_MENU'
     if query == 'mentors':
+        send_mentors_menu(bot, chat_id)
         return 'HANDLE_MENTORS'
     if query == 'program':
         send_program_info(bot, chat_id)
@@ -154,6 +167,43 @@ def handle_program(bot, update):
             reply_markup=InlineKeyboardMarkup(get_lessons_navigation_menu(query))
         )
     return 'HANDLE_PROGRAM'
+
+
+def handle_mentors(bot, update):
+    query = update.callback_query.data
+    chat_id = update.callback_query['message']['chat_id']
+    mentors = {
+        'mentor_1': """
+Ольга Пичугина
+
+Клинический психолог, член АКБТ, психолог Центра когнитивной терапии, организатор и преподаватель образовательной программы по КПТ в Москве и регионах
+
+Благодаря Ольге наш курс приобрел четкую и логичную структуру, доступную каждому, а также яркую и емкую презентацию. Профессиональные интересы Ольги лежат в области работы с депрессивным и тревожными расстройствами, обсессивно-компульсивным расстройством. Направления работы: когнитивно-поведенческая терапия, схема-терапия.        
+        """,
+        'mentor_2': """
+Анастасия Демченко
+
+Клинический психолог, психолог Центра когнитивной терапии, преподаватель образовательной программы по КПТ в Москве и регионах
+
+Анастасия являлась идейным вдохновителем создания данного курса. Профессиональные интересы Анастасии лежат в области работы с депрессивным и тревожными расстройствами, обсессивно-компульсивным расстройством. Направления работы: когнитивно-поведенческая терапия, схема-терапия, терапия принятием и ответственностью.
+        """
+    }
+    if query == 'back_to_menu':
+        send_main_menu_keyboard(bot, chat_id)
+        return 'HANDLE_MENU'
+    if query == 'mentors':
+        send_mentors_menu(bot, chat_id)
+    if query in mentors.keys():
+        bot.send_message(
+            chat_id=chat_id,
+            text=dedent(mentors[query]),
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('Назад', callback_data='mentors')]])
+        )
+    return 'HANDLE_MENTORS'
+
+
+def handle_payment(bot, update):
+    pass
 
 
 def handle_menu(bot, update):
@@ -192,9 +242,14 @@ def handle_menu(bot, update):
         return 'HANDLE_PROGRAM'
     if query == 'mentors':
         print(query)
+        send_mentors_menu(bot, chat_id)
         return 'HANDLE_MENTORS'
-    if query == 'course_cost':
-        pass
+    if query == 'get_course':
+        bot.send_message(
+            chat_id=chat_id,
+
+        )
+        return 'HANDLE_PAYMENT'
     bot.delete_message(chat_id=chat_id, message_id=message_id)
     return 'START'
 
@@ -226,6 +281,7 @@ def handle_users_reply(bot, update, database_password, database_host,
         'HANDLE_SYMPTOMS': handle_symptoms,
         'HANDLE_PROGRAM': handle_program,
         'HANDLE_MENTORS': handle_mentors,
+        'HANDLE_PAYMENT': handle_payment
     }
     state_handler = states_functions[user_state]
     next_state = state_handler(bot, update)
