@@ -1,7 +1,6 @@
 import json
 import os
 from functools import partial
-from pprint import pprint
 from textwrap import dedent
 
 import redis
@@ -42,17 +41,31 @@ def send_main_menu_keyboard(bot, chat_id, course_content_folder):
 
 
 def start(bot, update, course_content_folder):
-    send_main_menu_keyboard(bot, update['message']['chat_id'], course_content_folder)
+    send_main_menu_keyboard(
+        bot,
+        update['message']['chat_id'],
+        course_content_folder,
+    )
     return 'HANDLE_MENU'
 
 
 def send_program_info(bot, chat_id, course_content_folder):
-    lessons_content_filepath = os.path.join(course_content_folder, 'lessons.json')
+    lessons_content_filepath = os.path.join(
+        course_content_folder,
+        'lessons.json',
+    )
     with open(os.path.normpath(lessons_content_filepath), 'r') as lessons_json:
         lessons = json.load(lessons_json)
     keyboard = []
     for lesson, content in lessons.items():
-        keyboard.append([InlineKeyboardButton(content['header'], callback_data=lesson)])
+        keyboard.append(
+            [
+                InlineKeyboardButton(
+                    content['header'],
+                    callback_data=lesson,
+                )
+            ]
+        )
     keyboard.append([
             InlineKeyboardButton('В меню', callback_data='back_to_menu'),
             InlineKeyboardButton('О преподавателях', callback_data='mentors')
@@ -81,28 +94,54 @@ def handle_symptoms(bot, update, course_content_folder):
 def get_lessons_navigation_menu(query):
     query_number = int(query[-1])
     if query_number == 1:
-        keyboard = [[InlineKeyboardButton('>', callback_data=f'lesson_{query_number + 1}')]]
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    '>',
+                    callback_data=f'lesson_{query_number + 1}',
+                )
+            ]
+        ]
     if query_number == 5:
-        keyboard = [[InlineKeyboardButton('<', callback_data=f'lesson_{query_number - 1}')]]
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    '<',
+                    callback_data=f'lesson_{query_number - 1}',
+                )
+            ]
+        ]
     if query_number not in (1, 5):
         keyboard = [
             [
-                InlineKeyboardButton('<', callback_data=f'lesson_{query_number - 1}'),
-                InlineKeyboardButton('>', callback_data=f'lesson_{query_number + 1}')
+                InlineKeyboardButton(
+                    '<',
+                    callback_data=f'lesson_{query_number - 1}',
+                ),
+                InlineKeyboardButton(
+                    '>',
+                    callback_data=f'lesson_{query_number + 1}',
+                )
             ]
         ]
-    keyboard.append([InlineKeyboardButton('Назад к программе', callback_data='program')])
+    keyboard.append(
+        [InlineKeyboardButton('Назад к программе', callback_data='program')])
     return keyboard
 
 
 def send_mentors_menu(bot, chat_id, course_content_folder):
-    lessons_content_filepath = os.path.join(course_content_folder, 'mentors.json')
+    lessons_content_filepath = os.path.join(
+        course_content_folder,
+        'mentors.json',
+    )
     keyboard = []
     with open(os.path.normpath(lessons_content_filepath), 'r') as mentors_json:
         mentors = json.load(mentors_json)
         for mentor, content in mentors.items():
-            keyboard.append([InlineKeyboardButton(content['name'], callback_data=mentor)])
-    keyboard.append([InlineKeyboardButton('В меню', callback_data='back_to_menu')])
+            keyboard.append(
+                [InlineKeyboardButton(content['name'], callback_data=mentor)])
+    keyboard.append(
+        [InlineKeyboardButton('В меню', callback_data='back_to_menu')])
     filepath = os.path.join(course_content_folder, 'mentors_header.txt')
     with open(filepath, 'r') as mentors_header_file:
         mentors_header = mentors_header_file.read()
@@ -116,12 +155,14 @@ def send_mentors_menu(bot, chat_id, course_content_folder):
 def handle_program(bot, update, course_content_folder):
     query = update.callback_query.data
     chat_id = update.callback_query['message']['chat_id']
-    lessons_content_filepath = os.path.join(course_content_folder, 'lessons.json')
+    lessons_content_filepath = os.path.join(
+        course_content_folder, 'lessons.json')
     lessons_content = {}
     with open(os.path.normpath(lessons_content_filepath), 'r') as lessons_json:
         lessons = json.load(lessons_json)
         for lesson, content in lessons.items():
-            lessons_content[lesson] = f'{content["header"]}\n{content["content"]}'
+            lessons_content[lesson] =\
+                f'{content["header"]}\n{content["content"]}'
     if query == 'back_to_menu':
         send_main_menu_keyboard(bot, chat_id, course_content_folder)
         return 'HANDLE_MENU'
@@ -135,7 +176,8 @@ def handle_program(bot, update, course_content_folder):
         bot.send_message(
             chat_id=chat_id,
             text=dedent(lessons_content[query]),
-            reply_markup=InlineKeyboardMarkup(get_lessons_navigation_menu(query))
+            reply_markup=InlineKeyboardMarkup(
+                get_lessons_navigation_menu(query))
         )
     return 'HANDLE_PROGRAM'
 
@@ -143,12 +185,16 @@ def handle_program(bot, update, course_content_folder):
 def handle_mentors(bot, update, course_content_folder):
     query = update.callback_query.data
     chat_id = update.callback_query['message']['chat_id']
-    lessons_content_filepath = os.path.join(course_content_folder, 'mentors.json')
+    lessons_content_filepath = os.path.join(
+        course_content_folder,
+        'mentors.json',
+    )
     mentors_content = {}
     with open(os.path.normpath(lessons_content_filepath), 'r') as mentors_json:
         mentors = json.load(mentors_json)
         for mentor, content in mentors.items():
-            mentors_content[mentor] = f'{content["name"]}\n{content["description"]}'
+            mentors_content[mentor] =\
+                f'{content["name"]}\n{content["description"]}'
     if query == 'back_to_menu':
         send_main_menu_keyboard(bot, chat_id, course_content_folder)
         return 'HANDLE_MENU'
@@ -158,7 +204,8 @@ def handle_mentors(bot, update, course_content_folder):
         bot.send_message(
             chat_id=chat_id,
             text=dedent(mentors_content[query]),
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('Назад', callback_data='mentors')]])
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton('Назад', callback_data='mentors')]])
         )
     return 'HANDLE_MENTORS'
 
@@ -204,8 +251,8 @@ def handle_menu(bot, update, course_content_folder):
                 Чтобы заказать курс, пожалуйста, пройдите по сслыке:
                 https://kochet-psy.ru/anatomy_of_emotions
                 """),
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('В меню', callback_data='back_to_menu')]])
-        )
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(
+                'В меню', callback_data='back_to_menu')]]))
         return 'HANDLE_PAYMENT'
     bot.delete_message(chat_id=chat_id, message_id=message_id)
     return 'START'
@@ -233,11 +280,26 @@ def handle_users_reply(bot, update, database_password, database_host,
         user_state = db.get(tg_user_id).decode('utf-8')
     states_functions = {
         'START': partial(start, course_content_folder=course_content_folder),
-        'HANDLE_MENU': partial(handle_menu, course_content_folder=course_content_folder),
-        'HANDLE_SYMPTOMS': partial(handle_symptoms, course_content_folder=course_content_folder),
-        'HANDLE_PROGRAM': partial(handle_program, course_content_folder=course_content_folder),
-        'HANDLE_MENTORS': partial(handle_mentors, course_content_folder=course_content_folder),
-        'HANDLE_PAYMENT': partial(handle_payment, course_content_folder=course_content_folder),
+        'HANDLE_MENU': partial(
+            handle_menu,
+            course_content_folder=course_content_folder,
+        ),
+        'HANDLE_SYMPTOMS': partial(
+            handle_symptoms,
+            course_content_folder=course_content_folder,
+        ),
+        'HANDLE_PROGRAM': partial(
+            handle_program,
+            course_content_folder=course_content_folder,
+        ),
+        'HANDLE_MENTORS': partial(
+            handle_mentors,
+            course_content_folder=course_content_folder,
+        ),
+        'HANDLE_PAYMENT': partial(
+            handle_payment,
+            course_content_folder=course_content_folder,
+        ),
     }
     state_handler = states_functions[user_state]
     next_state = state_handler(bot, update)
