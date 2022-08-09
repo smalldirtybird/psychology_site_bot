@@ -45,7 +45,7 @@ def start(bot, update):
     return 'HANDLE_MENU'
 
 
-def send_program_info(bot, update):
+def send_program_info(bot, chat_id):
     keyboard = [
         [InlineKeyboardButton('Занятие 1. Введение', callback_data='lesson_1')],
         [InlineKeyboardButton('Занятие 2. Дезадаптивный стыд и вина', callback_data='lesson_2')],
@@ -58,25 +58,24 @@ def send_program_info(bot, update):
         ]
     ]
     bot.send_message(
-        chat_id=update.callback_query['message']['chat_id'],
+        chat_id=chat_id,
         text=dedent("""
 Курс состоит из 5 занятий в формате видео-лекций длительностью от 30 до 60 минут.
 
 После каждого урока вы получите домашнее задание для практической отработки. В пакет курса включены специальные бланки и аудиозаписи для практической части.
         """),
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        reply_markup=InlineKeyboardMarkup(keyboard),
     )
 
 
 def handle_symptoms(bot, update):
     query = update.callback_query.data
-    message_id = update.callback_query['message']['message_id']
     chat_id = update.callback_query['message']['chat_id']
     if query == 'back_to_menu':
         send_main_menu_keyboard(bot, chat_id)
         return 'HANDLE_MENU'
     if query == 'program':
-        send_program_info(bot, update)
+        send_program_info(bot, chat_id)
         return 'HANDLE_PROGRAM'
 
 
@@ -92,7 +91,7 @@ def handle_menu(bot, update):
         keyboard = [
             [
                 InlineKeyboardButton('В меню', callback_data='back_to_menu'),
-                InlineKeyboardButton('К программе', callback_data='mentors')
+                InlineKeyboardButton('К программе', callback_data='program')
             ]
         ]
         bot.send_message(
@@ -116,7 +115,7 @@ def handle_menu(bot, update):
         return 'HANDLE_SYMPTOMS'
     if query == 'program':
         print(query)
-        send_program_info(bot, update)
+        send_program_info(bot, chat_id)
         return 'HANDLE_PROGRAM'
     if query == 'mentors':
         pass
